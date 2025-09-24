@@ -14,54 +14,84 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Song+Myung&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Pinyon+Script&display=swap" rel="stylesheet">
     <style>
-        html, body { height: 100%; margin: 0; }
-        body { font-family: 'Noto Sans KR', sans-serif; }
-        .screen { display: none; height: 100%; }
-        .screen.active { display: flex; flex-direction: column; }
+        html, body { height: 100%; margin: 0; scroll-behavior: smooth; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: #f0f2f5; }
+        .font-title { font-family: 'Song Myung', serif; }
+        .font-noble-script { font-family: 'Pinyon Script', cursive; }
+        .screen { display: none; height: 100%; opacity: 0; transition: opacity 0.3s ease-in-out; }
+        .screen.active { display: flex; flex-direction: column; opacity: 1; }
         .accordion-content { display: none; }
         .accordion-item.open > .accordion-content { display: block; }
-        .accordion-toggle::before { content: '▶'; display: inline-block; margin-right: 0.5rem; transition: transform 0.2s ease-in-out; font-size: 0.7em; }
-        .accordion-item.open > .accordion-toggle::before { transform: rotate(90deg); }
+        .accordion-item.open > .accordion-toggle { background-color: #f5f5f4; } /* 목차 하이라이트 */
+        .accordion-toggle .chevron { transition: transform 0.2s ease-in-out; }
+        .accordion-item.open > .accordion-toggle .chevron { transform: rotate(90deg); }
+        .main-btn {
+            transform: translateY(0);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        .main-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        #flashcard-answer { transition: opacity 0.2s ease-in-out; } /* 정답 애니메이션 */
+
+         /* 스크롤바 디자인 */
+        #accordion-container::-webkit-scrollbar,
+        #flashcard-answer::-webkit-scrollbar { width: 6px; }
+        #accordion-container::-webkit-scrollbar-track,
+        #flashcard-answer::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        #accordion-container::-webkit-scrollbar-thumb,
+        #flashcard-answer::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        #accordion-container::-webkit-scrollbar-thumb:hover,
+        #flashcard-answer::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 flex items-center justify-center p-2 sm:p-4">
+<body class="bg-slate-100 text-slate-800 flex items-center justify-center p-2 sm:p-4">
 
-    <div class="container mx-auto max-w-lg w-full h-full bg-white rounded-2xl shadow-lg flex flex-col">
+    <div class="container mx-auto max-w-lg w-full h-full bg-stone-50 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-slate-200">
         
         <div id="loading-screen" class="screen active p-8 justify-center items-center text-center">
-            <h1 class="text-3xl font-bold text-gray-900 mb-4">학민 maden</h1>
-            <p id="loading-status" class="text-gray-500">데이터를 불러오는 중입니다...</p>
+            <h1 class="text-3xl font-bold text-slate-900 mb-4">학민 maden</h1>
+            <p id="loading-status" class="text-slate-500">데이터를 불러오는 중입니다...</p>
         </div>
 
         <div id="main-screen" class="screen p-8 justify-center text-center">
-             <header class="relative mb-8">
-                <h1 class="text-3xl font-bold text-gray-900">회계감사 암기 보조</h1>
-                <p class="text-gray-500 mt-2">학민 maden</p>
-                <button id="install-pwa-btn" class="hidden absolute -top-2 right-0 bg-gray-200 text-gray-700 text-xs font-bold py-1 px-2 rounded-md hover:bg-gray-300 transition">홈 화면에 추가</button>
-            </header>
-            <main class="flex flex-col space-y-4">
-                <button id="start-study-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 hover:bg-blue-700">학습 시작</button>
-                <button id="view-checked-btn" class="w-full bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 hover:bg-gray-800">체크된 문제 보기</button>
-            </main>
+             <header class="relative mb-10">
+                 <h1 class="text-5xl font-title text-slate-700">회계감사 암기 보조</h1>
+                 <p class="font-noble-script text-slate-600 mt-2 text-3xl">Hakmin maden</p>
+                 <button id="install-pwa-btn" class="hidden absolute -top-4 right-0 bg-slate-200 text-slate-700 text-xs font-bold py-1 px-3 rounded-full hover:bg-slate-300 transition">앱 설치</button>
+             </header>
+             <main class="flex flex-col space-y-4 px-8">
+                 <button id="start-study-btn" class="main-btn w-full bg-gradient-to-br from-sky-200 to-violet-200 text-sky-800 font-bold py-4 px-6 rounded-xl shadow-lg">학습 시작</button>
+                 <button id="view-checked-btn" class="main-btn w-full bg-gradient-to-br from-stone-200 to-stone-300 text-stone-700 font-bold py-4 px-6 rounded-xl shadow-lg">체크된 문제 보기</button>
+             </main>
         </div>
 
         <div id="selection-screen" class="screen p-6 md:p-8">
              <header class="mb-6 flex justify-between items-center flex-shrink-0">
-                <h2 id="selection-title" class="text-2xl font-bold text-gray-900">학습 범위 선택</h2>
-                <button id="back-to-main-btn" class="text-sm text-gray-500 hover:text-gray-800"> &lt; 처음으로</button>
-            </header>
-            <div id="accordion-container" class="space-y-2 overflow-y-auto"></div>
+                 <h2 id="selection-title" class="text-2xl font-bold text-slate-700">학습 범위 선택</h2>
+                 <button id="back-to-main-btn" class="text-sm text-slate-500 hover:text-slate-800 transition-colors"> &lt; 처음으로</button>
+             </header>
+             <div id="accordion-container" class="space-y-2 overflow-y-auto pr-2"></div>
         </div>
         
         <div id="flashcard-screen" class="screen p-6 md:p-8">
             <div class="flex-shrink-0">
+                <div id="progress-bar-container" class="w-full bg-stone-200/80 rounded-full h-1.5 mb-4">
+                    <div id="progress-bar" class="bg-gradient-to-r from-sky-300 to-violet-300 h-1.5 rounded-full transition-all duration-300 ease-in-out"></div>
+                </div>
                 <div id="breadcrumb-container" class="mb-2"></div>
-                <header class="mb-4 flex justify-between items-center">
-                    <h2 id="flashcard-title" class="text-xl font-bold text-gray-900 truncate flex items-center"></h2>
-                    <div class="flex items-center">
-                        <button id="check-card-btn-placeholder" class="text-2xl mr-3 transition-transform duration-200 ease-in-out hover:scale-125">☆</button>
-                        <button id="back-to-selection-btn" class="text-sm text-gray-500 hover:text-gray-800 flex-shrink-0">목차로</button>
+                <header class="mb-4 flex justify-between items-center space-x-4">
+                    <h2 id="flashcard-title" class="text-xl font-bold text-slate-700 flex items-center min-w-0"></h2>
+                    <div class="flex items-center space-x-2 flex-shrink-0">
+                        <button id="check-card-btn-placeholder" class="text-2xl text-stone-300 transition-transform duration-200 ease-in-out hover:scale-125">☆</button>
+                        <button id="back-to-selection-btn" class="flex items-center space-x-2 bg-stone-200 text-stone-600 px-3 py-2 rounded-lg hover:bg-stone-300 hover:text-stone-800 transition-all text-sm font-medium">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-list-ul" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M5 11.5a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm0-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 0 1h-9a.5.5 0 0 1-.5-.5zm-3 1a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm0 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/></svg>
+                            <span>목록</span>
+                        </button>
                     </div>
                 </header>
             </div>
@@ -86,9 +116,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // ▼▼▼ 범인은 바로 너! 이 주소를 바꿔야 해요! ▼▼▼
-            const CSV_URL = 'https://raw.githubusercontent.com/HacMinLee/audit-flashcard4/refs/heads/main/%EA%B0%90%EC%82%AC%EC%95%94%EA%B8%B0%ED%8C%8C%EC%9D%BC%EC%94%A8%EC%97%90%EC%8A%A4%EB%B9%84.csv'; 
-            // ▲▲▲ ▲▲▲ ▲▲▲
+            const CSV_URL = 'https://raw.githubusercontent.com/HacMinLee/audit-flashcard4/main/%EA%B0%90%EC%82%AC%EC%95%94%EA%B8%B0%ED%8C%8C%EC%9D%BC%EC%94%A8%EC%97%90%EC%8A%A4%EB%B9%84.csv'; 
 
             const screens = { loading: document.getElementById('loading-screen'), main: document.getElementById('main-screen'), selection: document.getElementById('selection-screen'), flashcard: document.getElementById('flashcard-screen') };
             const loadingStatus = document.getElementById('loading-status');
@@ -170,21 +198,36 @@
             
             function buildAccordionMenu(data) {
                 accordionContainer.innerHTML = '';
-                if(data.length === 0){ accordionContainer.innerHTML = '<p class="text-center text-gray-500">표시할 항목이 없습니다.</p>'; return; }
+                if(data.length === 0){ accordionContainer.innerHTML = '<p class="text-center text-slate-500 py-10">표시할 항목이 없습니다.</p>'; return; }
                 data.forEach(chapterData => {
                     const chapterItem = document.createElement('div');
-                    chapterItem.className = 'accordion-item border rounded-lg';
-                    chapterItem.innerHTML = `<div class="accordion-toggle bg-gray-100 p-3 cursor-pointer flex justify-between items-center font-bold text-lg"><span>${chapterData.chapter}</span><span class="text-sm text-gray-500 font-medium">${chapterData.totalCardCount}문제</span></div><div class="accordion-content pl-4 border-t"></div>`;
+                    chapterItem.className = 'accordion-item bg-white/70 rounded-xl shadow-sm transition-shadow hover:shadow-md border border-white';
+                    const chevronIcon = `<svg class="chevron w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
+                    chapterItem.innerHTML = `<div class="accordion-toggle p-4 cursor-pointer flex justify-between items-center font-bold text-lg text-slate-700 rounded-xl">
+                                                <div class="flex items-center space-x-3">
+                                                    ${chevronIcon}
+                                                    <span>${chapterData.chapter}</span>
+                                                </div>
+                                                <span class="text-sm text-slate-500 font-medium bg-stone-200/70 px-2.5 py-1 rounded-md">${chapterData.totalCardCount}문제</span>
+                                             </div>
+                                             <div class="accordion-content pl-6 pr-4 pb-2 border-t border-stone-200/50"></div>`;
                     const sectionContainer = chapterItem.querySelector('.accordion-content');
                     chapterData.sections.forEach(sectionData => {
                         const sectionItem = document.createElement('div');
-                        sectionItem.className = 'accordion-item py-2';
-                        sectionItem.innerHTML = `<div class="accordion-toggle p-2 cursor-pointer flex justify-between items-center font-semibold text-md text-gray-800"><span>${sectionData.sectionName}</span><span class="text-xs text-gray-500 font-medium">${sectionData.totalCardCount}문제</span></div><div class="accordion-content pl-6"></div>`;
+                        sectionItem.className = 'accordion-item py-1';
+                        sectionItem.innerHTML = `<div class="accordion-toggle p-2 cursor-pointer flex justify-between items-center font-semibold text-md text-slate-600 rounded-lg hover:bg-stone-100">
+                                                    <div class="flex items-center space-x-3">
+                                                        ${chevronIcon}
+                                                        <span>${sectionData.sectionName}</span>
+                                                    </div>
+                                                    <span class="text-xs text-slate-500 font-medium">${sectionData.totalCardCount}문제</span>
+                                                 </div>
+                                                 <div class="accordion-content pl-8"></div>`;
                         const topicContainer = sectionItem.querySelector('.accordion-content');
                         sectionData.topics.forEach(topicData => {
                             const topicItem = document.createElement('div');
-                            topicItem.className = 'p-2 cursor-pointer flex justify-between items-center text-sm text-gray-600 hover:bg-green-100 rounded-md';
-                            topicItem.innerHTML = `<span>${topicData.topicName}</span><span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-semibold">${topicData.cardCount}문제</span>`;
+                            topicItem.className = 'p-3 my-1 cursor-pointer flex justify-between items-center text-sm text-slate-600 hover:bg-sky-100/60 hover:text-sky-800 rounded-md transition-colors';
+                            topicItem.innerHTML = `<span>${topicData.topicName}</span><span class="text-xs bg-sky-200/70 text-sky-800 px-2 py-1 rounded-full font-semibold">${topicData.cardCount}문제</span>`;
                             topicItem.addEventListener('click', (e) => { e.stopPropagation(); startStudySession(topicData.cards, chapterData.chapter, sectionData.sectionName); });
                             topicContainer.appendChild(topicItem);
                         });
@@ -202,15 +245,28 @@
                 showScreen('flashcard');
             }
 
-            startStudyBtn.addEventListener('click', () => { selectionTitle.textContent = "학습 범위 선택"; buildAccordionMenu(appData); showScreen('selection'); });
+            startStudyBtn.addEventListener('click', () => { selectionTitle.textContent = "목차"; buildAccordionMenu(appData); showScreen('selection'); });
             viewCheckedBtn.addEventListener('click', () => {
                 checkedCardIds = JSON.parse(localStorage.getItem('checkedCardIds_v1')) || [];
                 if (checkedCardIds.length === 0) { alert('체크된 문제가 없습니다.'); return; }
                 const checkedIdsSet = new Set(checkedCardIds);
-                const checkedData = appData.map(c => ({ ...c, sections: c.sections.map(s => ({ ...s, topics: s.topics.map(t => ({ ...t, cards: t.cards.filter(card => checkedIdsSet.has(card.id)), cardCount: t.cards.filter(card => checkedIdsSet.has(card.id)).length })).filter(t => t.cardCount > 0) })).filter(s => s.topics.length > 0) })).filter(c => c.sections.length > 0);
-                checkedData.forEach(c => { c.sections.forEach(s => { s.totalCardCount = s.topics.reduce((sum, t) => sum + t.cardCount, 0); }); c.totalCardCount = c.sections.reduce((sum, s) => sum + s.totalCardCount, 0); });
+                
+                // 전체 목차 구조는 유지하되, 체크된 문제 수만 카운트하도록 수정
+                const checkedData = appData.map(chapter => {
+                    const sections = chapter.sections.map(section => {
+                        const topics = section.topics.map(topic => {
+                            const checkedCards = topic.cards.filter(card => checkedIdsSet.has(card.id));
+                            return { ...topic, cards: checkedCards, cardCount: checkedCards.length };
+                        });
+                        const sectionTotal = topics.reduce((sum, t) => sum + t.cardCount, 0);
+                        return { ...section, topics, totalCardCount: sectionTotal };
+                    });
+                    const chapterTotal = sections.reduce((sum, s) => sum + s.totalCardCount, 0);
+                    return { ...chapter, sections, totalCardCount: chapterTotal };
+                });
+
                 selectionTitle.textContent = "체크된 문제";
-                buildAccordionMenu(checkedData.filter(c => c.totalCardCount > 0));
+                buildAccordionMenu(checkedData); // 필터링 없이 전체 데이터를 전달
                 showScreen('selection');
             });
 
@@ -222,6 +278,17 @@
                 screens[screenKey].classList.add('active'); 
             }
             
+            function adjustTitleFontSize(element) {
+                const initialFontSize = 20; // text-xl is 1.25rem = 20px
+                const minFontSize = 14;
+                let currentFontSize = initialFontSize;
+                element.style.fontSize = `${initialFontSize}px`;
+                while (element.scrollWidth > element.clientWidth && currentFontSize > minFontSize) {
+                    currentFontSize--;
+                    element.style.fontSize = `${currentFontSize}px`;
+                }
+            }
+
             function renderFlashcard() {
                 const headerDiv = document.querySelector('#flashcard-screen header div');
                 const placeholder = document.getElementById('check-card-btn-placeholder');
@@ -230,63 +297,93 @@
                 if (!checkCardBtn) { 
                     checkCardBtn = document.createElement('button'); 
                     checkCardBtn.id = 'check-card-btn'; 
-                    checkCardBtn.className = 'text-2xl mr-3 transition-transform duration-200 ease-in-out hover:scale-125'; 
+                    checkCardBtn.className = 'text-2xl mr-1 transition-transform duration-200 ease-in-out hover:scale-125'; 
                     headerDiv.prepend(checkCardBtn); 
                 }
 
                 if (currentCards.length === 0) {
+                    document.getElementById('progress-bar-container').style.display = 'none';
                     breadcrumbContainer.innerHTML = '';
                     flashcardTitle.innerHTML = "<span>표시할 카드 없음</span>";
-                    flashcardContent.innerHTML = '<div class="text-center py-10"><p class="text-gray-500">선택된 카드가 없습니다.</p></div>';
+                    flashcardContent.innerHTML = '<div class="text-center py-10"><p class="text-slate-500">선택된 카드가 없습니다.</p></div>';
                     navigationContainer.innerHTML = '';
                     checkCardBtn.style.display = 'none';
                     return;
                 }
                 
+                document.getElementById('progress-bar-container').style.display = 'block';
                 checkCardBtn.style.display = 'block';
+
+                const progressBar = document.getElementById('progress-bar');
+                const progress = ((currentCardIndex + 1) / currentCards.length) * 100;
+                progressBar.style.width = `${progress}%`;
                 
                 flashcardContent.innerHTML = `
-                    <div id="flashcard-prompt" class="p-4 rounded-lg text-sm transition-colors duration-300 flex-shrink-0"></div>
-                    <div id="flashcard-answer" class="p-4 bg-gray-50 rounded-lg overflow-y-auto text-sm leading-relaxed flex-1"></div>
-                    <div class="grid grid-cols-3 gap-2 pt-2 flex-shrink-0">
-                        <button id="show-keyword-btn" class="w-full bg-green-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-green-600 transition text-sm">Keyword</button>
-                        <button id="fill-blank-btn" class="w-full bg-orange-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-orange-600 transition text-sm">빈칸</button>
-                        <button id="show-all-btn" class="w-full bg-blue-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-blue-600 transition text-sm">전체 보기</button>
+                    <div id="flashcard-prompt" class="p-4 rounded-lg text-base flex-shrink-0 border"></div>
+                    <div id="flashcard-answer" class="p-4 bg-white/60 rounded-lg overflow-y-auto text-base leading-relaxed flex-1 border border-stone-200/80"></div>
+                    <div class="grid grid-cols-3 gap-3 pt-2 flex-shrink-0">
+                        <button id="show-keyword-btn" class="main-btn w-full bg-gradient-to-br from-green-200 to-cyan-200 text-green-800 font-bold py-2.5 px-3 rounded-lg shadow">Keyword</button>
+                        <button id="fill-blank-btn" class="main-btn w-full bg-gradient-to-br from-amber-200 to-orange-200 text-amber-800 font-bold py-2.5 px-3 rounded-lg shadow">빈칸</button>
+                        <button id="show-all-btn" class="main-btn w-full bg-gradient-to-br from-sky-200 to-indigo-200 text-sky-800 font-bold py-2.5 px-3 rounded-lg shadow">전체 보기</button>
                     </div>`;
 
                 navigationContainer.innerHTML = `
                     <div class="flex justify-between items-center">
-                        <button id="prev-card-btn" class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 transition">&lt; 이전</button>
-                        <span id="card-progress" class="text-sm font-medium text-gray-600"></span>
-                        <button id="next-card-btn" class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 transition">다음 &gt;</button>
+                        <button id="prev-card-btn" class="main-btn bg-stone-200/80 text-stone-600 p-3 rounded-full shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>
+                        </button>
+                        <span id="card-progress" class="text-sm font-medium text-slate-600 tabular-nums"></span>
+                        <button id="next-card-btn" class="main-btn bg-stone-200/80 text-stone-600 p-3 rounded-full shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
+                        </button>
                     </div>`;
                 
                 const card = currentCards[currentCardIndex];
-                const importanceTagHTML = card.importance === 'Y' ? '<span class="ml-2 text-xs align-middle font-semibold text-blue-600 border border-blue-300 bg-blue-50 px-2 py-0.5 rounded-full">중요</span>' : '';
+                const importanceTagHTML = card.importance === 'Y' ? '<span class="ml-2 text-xs align-middle font-semibold text-sky-600 border border-sky-300 bg-sky-100 px-2 py-0.5 rounded-full flex-shrink-0">중요</span>' : '';
                 flashcardTitle.innerHTML = `<span>${card.name || "플래시카드"}</span>` + importanceTagHTML;
-                breadcrumbContainer.innerHTML = `<div class="text-xs text-gray-400 bg-gray-50 p-2 rounded flex items-center flex-wrap"><span class="font-semibold text-gray-700" style="font-size: 0.8rem;">${card.chapter}</span><span class="mx-1 text-gray-400">&gt;</span><span class="font-medium text-gray-600" style="font-size: 0.75rem;">${card.section}</span><span class="mx-1 text-gray-400">&gt;</span><span class="text-gray-500" style="font-size: 0.7rem;">${card.section2}</span></div>`;
+
+                adjustTitleFontSize(flashcardTitle);
+                
+                breadcrumbContainer.innerHTML = `<div class="text-xs text-stone-500 bg-stone-100 p-2 rounded-lg flex items-center flex-wrap">
+                                                    <span class="font-semibold text-stone-700">${card.chapter}</span>
+                                                    <span class="mx-1.5 text-stone-400">&gt;</span>
+                                                    <span class="font-medium text-stone-600">${card.section}</span>
+                                                    <span class="mx-1.5 text-stone-400">&gt;</span>
+                                                    <span class="text-stone-500">${card.section2}</span>
+                                                 </div>`;
                 
                 document.getElementById('flashcard-prompt').textContent = card.prompt;
-                document.getElementById('flashcard-answer').innerHTML = '<p class="text-gray-400">아래 버튼을 눌러 정답을 확인하세요.</p>';
+                const answerEl = document.getElementById('flashcard-answer');
+                answerEl.innerHTML = '<p class="text-stone-400">아래 버튼을 눌러 정답을 확인하세요.</p>';
                 document.getElementById('card-progress').textContent = `${currentCardIndex + 1} / ${currentCards.length}`;
-                document.getElementById('flashcard-prompt').className = 'p-4 rounded-lg text-sm transition-colors duration-300 bg-yellow-100 text-yellow-800 flex-shrink-0'; 
+                document.getElementById('flashcard-prompt').className = 'p-4 rounded-lg text-base transition-colors duration-300 bg-amber-50 text-amber-800 border-amber-200/80 flex-shrink-0'; 
                 
                 const isChecked = checkedCardIds.includes(card.id);
                 checkCardBtn.innerHTML = isChecked ? '★' : '☆'; 
                 checkCardBtn.classList.toggle('text-yellow-400', isChecked);
-                checkCardBtn.classList.toggle('text-gray-400', !isChecked);
+                checkCardBtn.classList.toggle('text-stone-300', !isChecked);
                 
                 const prevCardBtn = document.getElementById('prev-card-btn');
                 const nextCardBtn = document.getElementById('next-card-btn');
                 prevCardBtn.disabled = currentCardIndex === 0; 
                 nextCardBtn.disabled = currentCardIndex === currentCards.length - 1; 
                 prevCardBtn.classList.toggle('opacity-50', prevCardBtn.disabled); 
-                nextCardBtn.classList.toggle('opacity-50', nextCardBtn.disabled);
+                nextCardBtn.classList.toggle('opacity-50', nextCardBtn.disabled); 
                 
+                const revealAnswer = (mode) => {
+                    if (currentCards.length === 0) return;
+                    const newContent = parseOriginalText(currentCards[currentCardIndex].originalText, mode);
+                    answerEl.style.opacity = '0';
+                    setTimeout(() => {
+                        answerEl.innerHTML = newContent;
+                        answerEl.style.opacity = '1';
+                    }, 200);
+                };
+
                 checkCardBtn.onclick = toggleCheckStatus;
-                document.getElementById('show-keyword-btn').onclick = () => { if(currentCards.length > 0) document.getElementById('flashcard-answer').innerHTML = parseOriginalText(currentCards[currentCardIndex].originalText, 'keyword')};
-                document.getElementById('fill-blank-btn').onclick = () => { if(currentCards.length > 0) document.getElementById('flashcard-answer').innerHTML = parseOriginalText(currentCards[currentCardIndex].originalText, 'blank')};
-                document.getElementById('show-all-btn').onclick = () => { if(currentCards.length > 0) document.getElementById('flashcard-answer').innerHTML = parseOriginalText(currentCards[currentCardIndex].originalText, 'all')};
+                document.getElementById('show-keyword-btn').onclick = () => revealAnswer('keyword');
+                document.getElementById('fill-blank-btn').onclick = () => revealAnswer('blank');
+                document.getElementById('show-all-btn').onclick = () => revealAnswer('all');
                 prevCardBtn.onclick = () => { if (currentCardIndex > 0) { currentCardIndex--; renderFlashcard(); } };
                 nextCardBtn.onclick = () => { if (currentCardIndex < currentCards.length - 1) { currentCardIndex++; renderFlashcard(); } };
             }
@@ -302,19 +399,19 @@
                 const isChecked = checkedCardIds.includes(cardId);
                 checkCardBtn.innerHTML = isChecked ? '★' : '☆';
                 checkCardBtn.classList.toggle('text-yellow-400', isChecked);
-                checkCardBtn.classList.toggle('text-gray-400', !isChecked);
+                checkCardBtn.classList.toggle('text-stone-300', !isChecked);
             }
             function parseOriginalText(text = '', mode) { 
                 const sentences = text.split('|').map(s => s.trim().replace(/\n/g, '<br>')); 
                 let htmlResult = ''; 
                 sentences.forEach(sentence => { 
                     let processedSentence = sentence.replace(/<(.+?)>/g, (match, p1) => { 
-                        if (mode === 'keyword') return `<span class="inline-block bg-green-200 text-green-800 font-bold px-2 py-1 rounded-md m-1">${p1}</span>`; 
-                        if (mode === 'blank') return '<span class="font-bold text-orange-500">[____]</span>'; 
-                        return `<strong class="text-blue-600">${p1}</strong>`; 
+                        if (mode === 'keyword') return `<span class="inline-block bg-green-100/70 text-green-800 font-bold px-2 py-0.5 rounded-md m-0.5">${p1}</span>`; 
+                        if (mode === 'blank') return '<span class="font-bold text-amber-600">[____]</span>'; 
+                        return `<strong class="text-sky-700 font-semibold">${p1}</strong>`; 
                     }); 
-                    if (mode === 'keyword') { processedSentence = (sentence.match(/<(.+?)>/g) || []).map(kw => `<span class="inline-block bg-green-200 text-green-800 font-bold px-2 py-1 rounded-md m-1">${kw.replace(/[<>]/g, '')}</span>`).join(' '); } 
-                    htmlResult += `<p class="mb-2">${processedSentence}</p>`; 
+                    if (mode === 'keyword') { processedSentence = (sentence.match(/<(.+?)>/g) || []).map(kw => `<span class="inline-block bg-green-100/70 text-green-800 font-bold px-2 py-0.5 rounded-md m-0.5">${kw.replace(/[<>]/g, '')}</span>`).join(' '); } 
+                    htmlResult += `<p class="mb-3">${processedSentence}</p>`; 
                 }); 
                 return htmlResult; 
             }
@@ -323,6 +420,10 @@
     </script>
 </body>
 </html>
+
+
+
+
 
 
 
