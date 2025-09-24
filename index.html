@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>학민maden: 회계감사 암기 앱</title>
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#1a202c">
+    <link rel="icon" href="https://raw.githubusercontent.com/HacMinLee/audit-flashcard4/main/audit.png" sizes="32x32">
+    <link rel="icon" href="https://raw.githubusercontent.com/HacMinLee/audit-flashcard4/main/audit.png" sizes="192x192">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/HacMinLee/audit-flashcard4/main/audit.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        html, body { height: 100%; margin: 0; }
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .screen { display: none; height: 100%; }
+        .screen.active { display: flex; flex-direction: column; }
+        /* --- 아코디언 메뉴 스타일 (변경 없음) --- */
+        .accordion-content { display: none; }
+        .accordion-item.open > .accordion-content { display: block; }
+        .accordion-toggle::before { content: '▶'; display: inline-block; margin-right: 0.5rem; transition: transform 0.2s ease-in-out; font-size: 0.7em; }
+        .accordion-item.open > .accordion-toggle::before { transform: rotate(90deg); }
+    </style>
+    
+</head>
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center p-2 sm:p-4">
+
+    <div class="container mx-auto max-w-lg w-full h-full bg-white rounded-2xl shadow-lg flex flex-col">
+        
+        <div id="loading-screen" class="screen active p-8 justify-center items-center text-center">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">학민 maden</h1>
+            <p id="loading-status" class="text-gray-500">데이터를 불러오는 중입니다...</p>
+        </div>
+
+        <div id="main-screen" class="screen p-8 justify-center text-center">
+             <header class="relative mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">학민 maden</h1>
+                <p class="text-gray-500 mt-2">회계감사 암기 보조</p>
+                <!-- ▼▼▼ 1. '홈 화면에 추가' 버튼 추가 ▼▼▼ -->
+                <button id="install-pwa-btn" class="hidden absolute -top-2 right-0 bg-gray-200 text-gray-700 text-xs font-bold py-1 px-2 rounded-md hover:bg-gray-300 transition">홈 화면에 추가</button>
+            </header>
+            <main class="flex flex-col space-y-4">
+                <button id="start-study-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg transition duration-300 hover:bg-blue-700">학습 시작</button>
+                <button id="view-checked-btn" class="w-full bg-gray-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300 hover:bg-gray-800">체크된 문제 보기</button>
+            </main>
+        </div>
+
+        <div id="selection-screen" class="screen p-6 md:p-8">
+             <header class="mb-6 flex justify-between items-center flex-shrink-0">
+                <h2 id="selection-title" class="text-2xl font-bold text-gray-900">학습 범위 선택</h2>
+                <button id="back-to-main-btn" class="text-sm text-gray-500 hover:text-gray-800"> &lt; 처음으로</button>
+            </header>
+            <div id="accordion-container" class="space-y-2 overflow-y-auto"></div>
+        </div>
+        
+        <!-- ▼▼▼ 2. 레이아웃 고정 및 디자인 개선 (핵심!) ▼▼▼ -->
+        <div id="flashcard-screen" class="screen p-6 md:p-8">
+            <div class="flex-shrink-0">
+                <div id="breadcrumb-container" class="mb-2"></div>
+                <header class="mb-4 flex justify-between items-center">
+                    <h2 id="flashcard-title" class="text-xl font-bold text-gray-900 truncate flex items-center"></h2>
+                    <div class="flex items-center">
+                        <button id="check-card-btn-placeholder" class="text-2xl mr-3 transition-transform duration-200 ease-in-out hover:scale-125">☆</button>
+                        <button id="back-to-selection-btn" class="text-sm text-gray-500 hover:text-gray-800 flex-shrink-0">목차로</button>
+                    </div>
+                </header>
+            </div>
+            
+            <!-- 내용 영역이 남은 공간을 모두 차지하도록 설정 -->
+            <div id="flashcard-content" class="flex-1 flex flex-col space-y-4 min-h-0">
+                <!-- 여기에 JS로 내용이 채워짐 -->
+            </div>
+            
+            <!-- 이전/다음 버튼은 항상 맨 아래에 고정 -->
+            <div id="navigation-container" class="flex-shrink-0 pt-4">
+                 <!-- 여기에 JS로 내용이 채워짐 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => console.log('ServiceWorker registration successful'))
+                    .catch(error => console.log('ServiceWorker registration failed: ', error));
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const CSV_URL = 'https://raw.githubusercontent.com/HacMinLee/study-with-AI-python/main/%EA%B0%90%EC%82%AC%EC%95%94%EA%B8%B0%ED%8C%8C%EC%9D%BC%EC%94%A8%EC%97%90%EC%8A%A4%EB%B9%84.csv'; 
+
+            const screens = { loading: document.getElementById('loading-screen'), main: document.getElementById('main-screen'), selection: document.getElementById('selection-screen'), flashcard: document.getElementById('flashcard-screen') };
+            const loadingStatus = document.getElementById('loading-status');
+            const startStudyBtn = document.getElementById('start-study-btn');
+            const viewCheckedBtn = document.getElementById('view-checked-btn');
+            const accordionContainer = document.getElementById('accordion-container');
+            const selectionTitle = document.getElementById('selection-title');
+            const flashcardContent = document.getElementById('flashcard-content');
+            const breadcrumbContainer = document.getElementById('breadcrumb-container');
+            const flashcardTitle = document.getElementById('flashcard-title');
+            const backToMainBtn = document.getElementById('back-to-main-btn');
+            const backToSelectionBtn = document.getElementById('back-to-selection-btn');
+            const navigationContainer = document.getElementById('navigation-container');
+            
+            // ▼▼▼ '홈 화면에 추가' 버튼 로직 추가 ▼▼▼
+            const installPwaBtn = document.getElementById('install-pwa-btn');
+            let deferredPrompt;
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                installPwaBtn.classList.remove('hidden');
+            });
+
+            installPwaBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User response to the install prompt: ${outcome}`);
+                    deferredPrompt = null;
+                    installPwaBtn.classList.add('hidden');
+                }
+            });
+            // ▲▲▲ '홈 화면에 추가' 버튼 로직 끝 ▲▲▲
+
+
+            let appData = []; 
+            let currentCards = [];
+            let currentCardIndex = 0;
+            let checkedCardIds = JSON.parse(localStorage.getItem('checkedCardIds_v1')) || [];
+            
+            async function fetchAndProcessData() {
+                try {
+                    const response = await fetch(CSV_URL);
+                    if (!response.ok) throw new Error(`데이터 로딩 실패: ${response.statusText}`);
+                    const csvText = await response.text();
+                    Papa.parse(csvText, {
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: function(results) { appData = processCsvData(results.data); showScreen('main'); },
+                        error: function(error) { throw new Error(`CSV 파싱 오류: ${error.message}`); }
+                    });
+                } catch (error) {
+                    loadingStatus.textContent = `❌ 오류: ${error.message}`;
+                    loadingStatus.classList.add('text-red-500');
+                }
+            }
+
+            // --- processCsvData, buildAccordionMenu 함수는 변경 없음 ---
+            function processCsvData(flatData) {
+                const groupedData = {};
+                flatData.forEach((row, index) => {
+                    if (!row.Chaper || !row.Section || !row.큰주제) return;
+                    const chapter = row.Chaper.trim();
+                    const section = row.Section.trim();
+                    const topic = row.큰주제.trim();
+                    if (!groupedData[chapter]) groupedData[chapter] = {};
+                    if (!groupedData[chapter][section]) groupedData[chapter][section] = {};
+                    if (!groupedData[chapter][section][topic]) groupedData[chapter][section][topic] = [];
+                    groupedData[chapter][section][topic].push({ id: `${chapter}-${section}-${topic}-${index}`, section2: topic, name: row.소주제.trim(), prompt: row.표시사항.trim(), originalText: row.원문 ? row.원문.trim() : "", reference: row.기준서.trim(), importance: row.파란색여부.trim().toUpperCase() });
+                });
+                return Object.keys(groupedData).map(chapter => {
+                    const sections = Object.keys(groupedData[chapter]).map(sectionName => {
+                        const topics = Object.keys(groupedData[chapter][sectionName]).map(topicName => {
+                            const cards = groupedData[chapter][sectionName][topicName];
+                            return { topicName, cards, cardCount: cards.length };
+                        });
+                        return { sectionName, topics, totalCardCount: topics.reduce((sum, t) => sum + t.cardCount, 0) };
+                    });
+                    return { chapter, sections, totalCardCount: sections.reduce((sum, s) => sum + s.totalCardCount, 0) };
+                });
+            }
+            
+            function buildAccordionMenu(data) {
+                accordionContainer.innerHTML = '';
+                if(data.length === 0){ accordionContainer.innerHTML = '<p class="text-center text-gray-500">표시할 항목이 없습니다.</p>'; return; }
+                data.forEach(chapterData => {
+                    const chapterItem = document.createElement('div');
+                    chapterItem.className = 'accordion-item border rounded-lg';
+                    chapterItem.innerHTML = `<div class="accordion-toggle bg-gray-100 p-3 cursor-pointer flex justify-between items-center font-bold text-lg"><span>${chapterData.chapter}</span><span class="text-sm text-gray-500 font-medium">${chapterData.totalCardCount}문제</span></div><div class="accordion-content pl-4 border-t"></div>`;
+                    const sectionContainer = chapterItem.querySelector('.accordion-content');
+                    chapterData.sections.forEach(sectionData => {
+                        const sectionItem = document.createElement('div');
+                        sectionItem.className = 'accordion-item py-2';
+                        sectionItem.innerHTML = `<div class="accordion-toggle p-2 cursor-pointer flex justify-between items-center font-semibold text-md text-gray-800"><span>${sectionData.sectionName}</span><span class="text-xs text-gray-500 font-medium">${sectionData.totalCardCount}문제</span></div><div class="accordion-content pl-6"></div>`;
+                        const topicContainer = sectionItem.querySelector('.accordion-content');
+                        sectionData.topics.forEach(topicData => {
+                            const topicItem = document.createElement('div');
+                            topicItem.className = 'p-2 cursor-pointer flex justify-between items-center text-sm text-gray-600 hover:bg-green-100 rounded-md';
+                            topicItem.innerHTML = `<span>${topicData.topicName}</span><span class="text-xs bg-green-200 text-green-800 px-2 py-1 rounded-full font-semibold">${topicData.cardCount}문제</span>`;
+                            topicItem.addEventListener('click', (e) => { e.stopPropagation(); startStudySession(topicData.cards, chapterData.chapter, sectionData.sectionName); });
+                            topicContainer.appendChild(topicItem);
+                        });
+                        sectionContainer.appendChild(sectionItem);
+                    });
+                    accordionContainer.appendChild(chapterItem);
+                });
+                document.querySelectorAll('.accordion-toggle').forEach(toggle => { toggle.addEventListener('click', () => { toggle.parentElement.classList.toggle('open'); }); });
+            }
+            
+            function startStudySession(cards, chapter, section) {
+                currentCards = [...cards].sort((a, b) => ((a.importance === 'N') ? 1 : -1) - ((b.importance === 'N') ? 1 : -1)).map(card => ({ ...card, chapter, section }));
+                currentCardIndex = 0;
+                renderFlashcard();
+                showScreen('flashcard');
+            }
+
+            startStudyBtn.addEventListener('click', () => { selectionTitle.textContent = "학습 범위 선택"; buildAccordionMenu(appData); showScreen('selection'); });
+            viewCheckedBtn.addEventListener('click', () => {
+                checkedCardIds = JSON.parse(localStorage.getItem('checkedCardIds_v1')) || [];
+                if (checkedCardIds.length === 0) { alert('체크된 문제가 없습니다.'); return; }
+                const checkedIdsSet = new Set(checkedCardIds);
+                const checkedData = appData.map(c => ({ ...c, sections: c.sections.map(s => ({ ...s, topics: s.topics.map(t => ({ ...t, cards: t.cards.filter(card => checkedIdsSet.has(card.id)), cardCount: t.cards.filter(card => checkedIdsSet.has(card.id)).length })).filter(t => t.cardCount > 0) })).filter(s => s.topics.length > 0) })).filter(c => c.sections.length > 0);
+                checkedData.forEach(c => { c.sections.forEach(s => { s.totalCardCount = s.topics.reduce((sum, t) => sum + t.cardCount, 0); }); c.totalCardCount = c.sections.reduce((sum, s) => sum + s.totalCardCount, 0); });
+                selectionTitle.textContent = "체크된 문제";
+                buildAccordionMenu(checkedData.filter(c => c.totalCardCount > 0));
+                showScreen('selection');
+            });
+
+            backToMainBtn.addEventListener('click', () => showScreen('main'));
+            backToSelectionBtn.addEventListener('click', () => { currentCards = []; showScreen('selection'); });
+            
+            function showScreen(screenKey) { 
+                Object.values(screens).forEach(s => s.classList.remove('active')); 
+                screens[screenKey].classList.add('active'); 
+            }
+            
+            // ▼▼▼ 3. renderFlashcard 함수 대규모 수정 ▼▼▼
+            function renderFlashcard() {
+                const headerDiv = document.querySelector('#flashcard-screen header div');
+                const placeholder = document.getElementById('check-card-btn-placeholder');
+                if(placeholder) placeholder.remove();
+                let checkCardBtn = document.getElementById('check-card-btn');
+                if (!checkCardBtn) { 
+                    checkCardBtn = document.createElement('button'); 
+                    checkCardBtn.id = 'check-card-btn'; 
+                    checkCardBtn.className = 'text-2xl mr-3 transition-transform duration-200 ease-in-out hover:scale-125'; 
+                    headerDiv.prepend(checkCardBtn); 
+                }
+
+                if (currentCards.length === 0) {
+                    breadcrumbContainer.innerHTML = '';
+                    flashcardTitle.innerHTML = "<span>표시할 카드 없음</span>";
+                    flashcardContent.innerHTML = '<div class="text-center py-10"><p class="text-gray-500">선택된 카드가 없습니다.</p></div>';
+                    navigationContainer.innerHTML = '';
+                    checkCardBtn.style.display = 'none';
+                    return;
+                }
+                
+                checkCardBtn.style.display = 'block';
+                
+                // 정답 창과 버튼들을 flashcardContent 안에 그립니다.
+                flashcardContent.innerHTML = `
+                    <div id="flashcard-prompt" class="p-4 rounded-lg text-sm transition-colors duration-300 flex-shrink-0"></div>
+                    <div id="flashcard-answer" class="p-4 bg-gray-50 rounded-lg overflow-y-auto text-sm leading-relaxed flex-1"></div>
+                    <div class="grid grid-cols-3 gap-2 pt-2 flex-shrink-0">
+                        <button id="show-keyword-btn" class="w-full bg-green-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-green-600 transition text-sm">Keyword</button>
+                        <button id="fill-blank-btn" class="w-full bg-orange-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-orange-600 transition text-sm">빈칸</button>
+                        <button id="show-all-btn" class="w-full bg-blue-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-blue-600 transition text-sm">전체 보기</button>
+                    </div>`;
+
+                // 이전/다음 버튼을 navigationContainer 안에 그립니다.
+                navigationContainer.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <button id="prev-card-btn" class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 transition">&lt; 이전</button>
+                        <span id="card-progress" class="text-sm font-medium text-gray-600"></span>
+                        <button id="next-card-btn" class="bg-gray-200 text-gray-700 px-5 py-2 rounded-lg hover:bg-gray-300 transition">다음 &gt;</button>
+                    </div>`;
+                
+                const card = currentCards[currentCardIndex];
+                const importanceTagHTML = card.importance === 'Y' ? '<span class="ml-2 text-xs align-middle font-semibold text-blue-600 border border-blue-300 bg-blue-50 px-2 py-0.5 rounded-full">중요</span>' : '';
+                flashcardTitle.innerHTML = `<span>${card.name || "플래시카드"}</span>` + importanceTagHTML;
+                breadcrumbContainer.innerHTML = `<div class="text-xs text-gray-400 bg-gray-50 p-2 rounded flex items-center flex-wrap"><span class="font-semibold text-gray-700" style="font-size: 0.8rem;">${card.chapter}</span><span class="mx-1 text-gray-400">&gt;</span><span class="font-medium text-gray-600" style="font-size: 0.75rem;">${card.section}</span><span class="mx-1 text-gray-400">&gt;</span><span class="text-gray-500" style="font-size: 0.7rem;">${card.section2}</span></div>`;
+                
+                document.getElementById('flashcard-prompt').textContent = card.prompt;
+                document.getElementById('flashcard-answer').innerHTML = '<p class="text-gray-400">아래 버튼을 눌러 정답을 확인하세요.</p>';
+                document.getElementById('card-progress').textContent = `${currentCardIndex + 1} / ${currentCards.length}`;
+                document.getElementById('flashcard-prompt').className = 'p-4 rounded-lg text-sm transition-colors duration-300 bg-yellow-100 text-yellow-800 flex-shrink-0'; 
+                
+                const isChecked = checkedCardIds.includes(card.id);
+                checkCardBtn.innerHTML = isChecked ? '★' : '☆'; 
+                checkCardBtn.classList.toggle('text-yellow-400', isChecked);
+                checkCardBtn.classList.toggle('text-gray-400', !isChecked);
+                
+                const prevCardBtn = document.getElementById('prev-card-btn');
+                const nextCardBtn = document.getElementById('next-card-btn');
+                prevCardBtn.disabled = currentCardIndex === 0; 
+                nextCardBtn.disabled = currentCardIndex === currentCards.length - 1; 
+                prevCardBtn.classList.toggle('opacity-50', prevCardBtn.disabled); 
+                nextCardBtn.classList.toggle('opacity-50', nextCardBtn.disabled);
+                
+                checkCardBtn.onclick = toggleCheckStatus;
+                document.getElementById('show-keyword-btn').onclick = () => { if(currentCards.length > 0) document.getElementById('flashcard-answer').innerHTML = parseOriginalText(currentCards[currentCardIndex].originalText, 'keyword')};
+                document.getElementById('fill-blank-btn').onclick = () => { if(currentCards.length > 0) document.getElementById('flashcard-answer').innerHTML = parseOriginalText(currentCards[currentCardIndex].originalText, 'blank')};
+                document.getElementById('show-all-btn').onclick = () => { if(currentCards.length > 0) document.getElementById('flashcard-answer').innerHTML = parseOriginalText(currentCards[currentCardIndex].originalText, 'all')};
+                prevCardBtn.onclick = () => { if (currentCardIndex > 0) { currentCardIndex--; renderFlashcard(); } };
+                nextCardBtn.onclick = () => { if (currentCardIndex < currentCards.length - 1) { currentCardIndex++; renderFlashcard(); } };
+            }
+
+            // --- toggleCheckStatus, parseOriginalText 함수는 변경 없음 ---
+            function toggleCheckStatus() { 
+                if (currentCards.length === 0) return;
+                const cardId = currentCards[currentCardIndex].id; 
+                const index = checkedCardIds.indexOf(cardId); 
+                if (index > -1) checkedCardIds.splice(index, 1);
+                else checkedCardIds.push(cardId);
+                localStorage.setItem('checkedCardIds_v1', JSON.stringify(checkedCardIds)); 
+                const checkCardBtn = document.getElementById('check-card-btn');
+                const isChecked = checkedCardIds.includes(cardId);
+                checkCardBtn.innerHTML = isChecked ? '★' : '☆';
+                checkCardBtn.classList.toggle('text-yellow-400', isChecked);
+                checkCardBtn.classList.toggle('text-gray-400', !isChecked);
+            }
+            function parseOriginalText(text = '', mode) { 
+                const sentences = text.split('|').map(s => s.trim().replace(/\n/g, '<br>')); 
+                let htmlResult = ''; 
+                sentences.forEach(sentence => { 
+                    let processedSentence = sentence.replace(/<(.+?)>/g, (match, p1) => { 
+                        if (mode === 'keyword') return `<span class="inline-block bg-green-200 text-green-800 font-bold px-2 py-1 rounded-md m-1">${p1}</span>`; 
+                        if (mode === 'blank') return '<span class="font-bold text-orange-500">[____]</span>'; 
+                        return `<strong class="text-blue-600">${p1}</strong>`; 
+                    }); 
+                    if (mode === 'keyword') { processedSentence = (sentence.match(/<(.+?)>/g) || []).map(kw => `<span class="inline-block bg-green-200 text-green-800 font-bold px-2 py-1 rounded-md m-1">${kw.replace(/[<>]/g, '')}</span>`).join(' '); } 
+                    htmlResult += `<p class="mb-2">${processedSentence}</p>`; 
+                }); 
+                return htmlResult; 
+            }
+            fetchAndProcessData();
+        });
+    </script>
+</body>
+</html>
