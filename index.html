@@ -40,13 +40,17 @@
 
          /* 스크롤바 디자인 */
         #accordion-container::-webkit-scrollbar,
-        #flashcard-answer::-webkit-scrollbar { width: 6px; }
+        #flashcard-answer::-webkit-scrollbar,
+        #announcement-content::-webkit-scrollbar { width: 6px; }
         #accordion-container::-webkit-scrollbar-track,
-        #flashcard-answer::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        #flashcard-answer::-webkit-scrollbar-track,
+        #announcement-content::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
         #accordion-container::-webkit-scrollbar-thumb,
-        #flashcard-answer::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        #flashcard-answer::-webkit-scrollbar-thumb,
+        #announcement-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
         #accordion-container::-webkit-scrollbar-thumb:hover,
-        #flashcard-answer::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        #flashcard-answer::-webkit-scrollbar-thumb:hover,
+        #announcement-content::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 flex items-center justify-center p-2 sm:p-4">
@@ -66,7 +70,9 @@
              </header>
              <main class="flex flex-col space-y-4 px-8">
                  <button id="start-study-btn" class="main-btn w-full bg-gradient-to-br from-sky-200 to-violet-200 text-sky-800 font-bold py-4 px-6 rounded-xl shadow-lg">학습 시작</button>
-                 <button id="view-checked-btn" class="main-btn w-full bg-gradient-to-br from-stone-200 to-stone-300 text-stone-700 font-bold py-4 px-6 rounded-xl shadow-lg">체크된 문제 보기</button>
+                 <button id="view-checked-btn" class="main-btn w-full bg-gradient-to-br from-stone-200 to-stone-300 text-stone-700 font-bold py-4 px-6 rounded-xl shadow-lg">★ 체크된 문제 보기</button>
+                 <button id="random-question-btn" class="main-btn w-full bg-gradient-to-br from-teal-200 to-lime-200 text-teal-800 font-bold py-4 px-6 rounded-xl shadow-lg">랜덤 물음</button>
+                 <button id="announcement-btn" class="main-btn w-full bg-gradient-to-br from-slate-200 to-slate-300 text-slate-700 font-bold py-4 px-6 rounded-xl shadow-lg">공지사항</button>
              </main>
         </div>
 
@@ -76,6 +82,39 @@
                  <button id="back-to-main-btn" class="text-sm text-slate-500 hover:text-slate-800 transition-colors"> &lt; 처음으로</button>
              </header>
              <div id="accordion-container" class="space-y-2 overflow-y-auto pr-2"></div>
+        </div>
+
+        <div id="random-selection-screen" class="screen p-8 justify-center text-center">
+            <header class="mb-10 flex justify-center items-center relative">
+                <button id="back-to-main-from-random-btn" class="absolute left-0 text-sm text-slate-500 hover:text-slate-800 transition-colors"> &lt; 처음으로</button>
+                <h2 class="text-2xl font-bold text-slate-700">랜덤 물음 방식 선택</h2>
+            </header>
+            <main class="flex flex-col space-y-4 px-8">
+                <button id="random-all-btn" class="main-btn w-full bg-gradient-to-br from-teal-200 to-lime-200 text-teal-800 font-bold py-4 px-6 rounded-xl shadow-lg">전체 문제 중 랜덤</button>
+                <button id="random-checked-btn" class="main-btn w-full bg-gradient-to-br from-amber-200 to-orange-200 text-amber-800 font-bold py-4 px-6 rounded-xl shadow-lg">체크된 문제 중 랜덤</button>
+            </main>
+        </div>
+
+        <div id="announcement-screen" class="screen p-6 md:p-8">
+            <header class="mb-6 flex justify-between items-center flex-shrink-0">
+                <h2 class="text-2xl font-bold text-slate-700">공지사항</h2>
+                <button id="back-to-main-from-announcement-btn" class="text-sm text-slate-500 hover:text-slate-800 transition-colors"> &lt; 처음으로</button>
+            </header>
+            <div id="announcement-content" class="prose max-w-none p-4 bg-white/60 rounded-lg overflow-y-auto text-base leading-relaxed flex-1 border border-stone-200/80">
+                <!-- 여기에 공지사항 내용을 작성하시면 됩니다. -->
+                <h3 class="font-bold">앱 업데이트 안내 (v1.1)</h3>
+                <p>안녕하세요,이학민입니다. 
+                    목차와 용어등은 노준화요약집을 참고하였습니다.저작권 문제가 있기에 일단 외부유출은 ㄴㄴ </p>
+                <ul>
+                    <li><strong>중요표시란?:</strong> 노준화요약서 기준 필수입니다. 
+                    거의 원문 그대로 옮겨놨습니다. 중요표시가 없는 문제의 경우 미출제or강사도 그냥 대충 설명하고 넘어간겁니다.
+                     제가 대충 요약해서 넣어놨습니다.
+                     각 단원에서 중요문제가 먼저, 뒤에 몰아서 안중요문제가 나옵니다.</li>
+                    <li><strong>UI 오탈자,오류,화면깨짐제보:</strong> 1실 이학민자리에 포스트잇 던져놔주세요.</li>
+                </ul>
+                <p>사용 중 불편한 점이나 필요기능이 있다면 꼭 피드백 부탁드립니다.</p>
+                <p>감사합니다.</p>
+            </div>
         </div>
         
         <div id="flashcard-screen" class="screen p-6 md:p-8">
@@ -118,10 +157,19 @@
         document.addEventListener('DOMContentLoaded', () => {
             const CSV_URL = 'https://raw.githubusercontent.com/HacMinLee/audit-flashcard4/main/%EA%B0%90%EC%82%AC%EC%95%94%EA%B8%B0%ED%8C%8C%EC%9D%BC%EC%94%A8%EC%97%90%EC%8A%A4%EB%B9%84.csv'; 
 
-            const screens = { loading: document.getElementById('loading-screen'), main: document.getElementById('main-screen'), selection: document.getElementById('selection-screen'), flashcard: document.getElementById('flashcard-screen') };
+            const screens = { 
+                loading: document.getElementById('loading-screen'), 
+                main: document.getElementById('main-screen'), 
+                selection: document.getElementById('selection-screen'), 
+                flashcard: document.getElementById('flashcard-screen'),
+                announcement: document.getElementById('announcement-screen'),
+                randomSelection: document.getElementById('random-selection-screen')
+            };
             const loadingStatus = document.getElementById('loading-status');
             const startStudyBtn = document.getElementById('start-study-btn');
             const viewCheckedBtn = document.getElementById('view-checked-btn');
+            const announcementBtn = document.getElementById('announcement-btn');
+            const randomQuestionBtn = document.getElementById('random-question-btn');
             const accordionContainer = document.getElementById('accordion-container');
             const selectionTitle = document.getElementById('selection-title');
             const flashcardContent = document.getElementById('flashcard-content');
@@ -130,6 +178,10 @@
             const backToMainBtn = document.getElementById('back-to-main-btn');
             const backToSelectionBtn = document.getElementById('back-to-selection-btn');
             const navigationContainer = document.getElementById('navigation-container');
+            const backToMainFromAnnouncementBtn = document.getElementById('back-to-main-from-announcement-btn');
+            const backToMainFromRandomBtn = document.getElementById('back-to-main-from-random-btn');
+            const randomAllBtn = document.getElementById('random-all-btn');
+            const randomCheckedBtn = document.getElementById('random-checked-btn');
             
             const installPwaBtn = document.getElementById('install-pwa-btn');
             let deferredPrompt;
@@ -152,9 +204,19 @@
 
 
             let appData = []; 
+            let allCardsFlat = [];
             let currentCards = [];
             let currentCardIndex = 0;
             let checkedCardIds = JSON.parse(localStorage.getItem('checkedCardIds_v1')) || [];
+            let isRandomMode = false; // 랜덤 모드 상태 변수
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
             
             async function fetchAndProcessData() {
                 try {
@@ -164,7 +226,11 @@
                     Papa.parse(csvText, {
                         header: true,
                         skipEmptyLines: true,
-                        complete: function(results) { appData = processCsvData(results.data); showScreen('main'); },
+                        complete: function(results) { 
+                            appData = processCsvData(results.data); 
+                            allCardsFlat = appData.flatMap(c => c.sections.flatMap(s => s.topics.flatMap(t => t.cards.map(card => ({...card, chapter: c.chapter, section: s.sectionName})))));
+                            showScreen('main'); 
+                        },
                         error: function(error) { throw new Error(`CSV 파싱 오류: ${error.message}`); }
                     });
                 } catch (error) {
@@ -228,7 +294,11 @@
                             const topicItem = document.createElement('div');
                             topicItem.className = 'p-3 my-1 cursor-pointer flex justify-between items-center text-sm text-slate-600 hover:bg-sky-100/60 hover:text-sky-800 rounded-md transition-colors';
                             topicItem.innerHTML = `<span>${topicData.topicName}</span><span class="text-xs bg-sky-200/70 text-sky-800 px-2 py-1 rounded-full font-semibold">${topicData.cardCount}문제</span>`;
-                            topicItem.addEventListener('click', (e) => { e.stopPropagation(); startStudySession(topicData.cards, chapterData.chapter, sectionData.sectionName); });
+                            topicItem.addEventListener('click', (e) => { 
+                                e.stopPropagation(); 
+                                isRandomMode = false; // 일반 학습 모드
+                                startStudySession(topicData.cards, chapterData.chapter, sectionData.sectionName); 
+                            });
                             topicContainer.appendChild(topicItem);
                         });
                         sectionContainer.appendChild(sectionItem);
@@ -239,7 +309,11 @@
             }
             
             function startStudySession(cards, chapter, section) {
-                currentCards = [...cards].sort((a, b) => ((a.importance === 'N') ? 1 : -1) - ((b.importance === 'N') ? 1 : -1)).map(card => ({ ...card, chapter, section }));
+                if (isRandomMode) {
+                    currentCards = [...cards].map(card => ({ ...card, chapter, section })); // 랜덤 모드는 정렬 안함
+                } else {
+                    currentCards = [...cards].sort((a, b) => ((a.importance === 'N') ? 1 : -1) - ((b.importance === 'N') ? 1 : -1)).map(card => ({ ...card, chapter, section }));
+                }
                 currentCardIndex = 0;
                 renderFlashcard();
                 showScreen('flashcard');
@@ -251,7 +325,6 @@
                 if (checkedCardIds.length === 0) { alert('체크된 문제가 없습니다.'); return; }
                 const checkedIdsSet = new Set(checkedCardIds);
                 
-                // 전체 목차 구조는 유지하되, 체크된 문제 수만 카운트하도록 수정
                 const checkedData = appData.map(chapter => {
                     const sections = chapter.sections.map(section => {
                         const topics = section.topics.map(topic => {
@@ -266,12 +339,42 @@
                 });
 
                 selectionTitle.textContent = "체크된 문제";
-                buildAccordionMenu(checkedData); // 필터링 없이 전체 데이터를 전달
+                buildAccordionMenu(checkedData);
                 showScreen('selection');
+            });
+            announcementBtn.addEventListener('click', () => showScreen('announcement'));
+            randomQuestionBtn.addEventListener('click', () => showScreen('randomSelection'));
+
+            randomAllBtn.addEventListener('click', () => {
+                if (allCardsFlat.length === 0) { alert('문제가 없습니다.'); return; }
+                isRandomMode = true;
+                const shuffledCards = shuffleArray([...allCardsFlat]);
+                startStudySession(shuffledCards, '랜덤', '전체 문제');
+            });
+
+            randomCheckedBtn.addEventListener('click', () => {
+                checkedCardIds = JSON.parse(localStorage.getItem('checkedCardIds_v1')) || [];
+                if (checkedCardIds.length === 0) { alert('체크된 문제가 없습니다.'); return; }
+                const checkedIdsSet = new Set(checkedCardIds);
+                const checkedCards = allCardsFlat.filter(card => checkedIdsSet.has(card.id));
+                if (checkedCards.length === 0) { alert('체크된 문제가 없습니다.'); return; }
+                isRandomMode = true;
+                const shuffledCards = shuffleArray([...checkedCards]);
+                startStudySession(shuffledCards, '랜덤', '체크된 문제');
             });
 
             backToMainBtn.addEventListener('click', () => showScreen('main'));
-            backToSelectionBtn.addEventListener('click', () => { currentCards = []; showScreen('selection'); });
+            backToMainFromAnnouncementBtn.addEventListener('click', () => showScreen('main'));
+            backToMainFromRandomBtn.addEventListener('click', () => showScreen('main'));
+            backToSelectionBtn.addEventListener('click', () => { 
+                if (isRandomMode) {
+                    showScreen('randomSelection');
+                } else {
+                    showScreen('selection');
+                }
+                currentCards = []; 
+                isRandomMode = false;
+            });
             
             function showScreen(screenKey) { 
                 Object.values(screens).forEach(s => s.classList.remove('active')); 
@@ -314,20 +417,34 @@
                 document.getElementById('progress-bar-container').style.display = 'block';
                 checkCardBtn.style.display = 'block';
 
+                const card = currentCards[currentCardIndex];
+                const hasKeywords = card.originalText && card.originalText.includes('<');
+
                 const progressBar = document.getElementById('progress-bar');
                 const progress = ((currentCardIndex + 1) / currentCards.length) * 100;
                 progressBar.style.width = `${progress}%`;
                 
+                let actionButtonsHTML = '';
+                if (hasKeywords) {
+                    actionButtonsHTML = `
+                        <div class="grid grid-cols-3 gap-3 pt-2 flex-shrink-0">
+                            <button id="show-keyword-btn" class="main-btn w-full bg-gradient-to-br from-green-200 to-cyan-200 text-green-800 font-bold py-2.5 px-3 rounded-lg shadow">Keyword</button>
+                            <button id="fill-blank-btn" class="main-btn w-full bg-gradient-to-br from-amber-200 to-orange-200 text-amber-800 font-bold py-2.5 px-3 rounded-lg shadow">빈칸</button>
+                            <button id="show-all-btn" class="main-btn w-full bg-gradient-to-br from-sky-200 to-indigo-200 text-sky-800 font-bold py-2.5 px-3 rounded-lg shadow">전체 보기</button>
+                        </div>`;
+                } else {
+                    actionButtonsHTML = `
+                        <div class="pt-2 flex-shrink-0">
+                            <button id="show-full-answer-btn" class="main-btn w-full bg-gradient-to-br from-sky-200 to-indigo-200 text-sky-800 font-bold py-4 px-6 rounded-xl shadow-lg">정답 보기</button>
+                        </div>`;
+                }
+
                 flashcardContent.innerHTML = `
                     <div id="flashcard-prompt" class="p-4 rounded-lg text-base flex-shrink-0 border"></div>
                     <div id="flashcard-answer" class="p-4 bg-white/60 rounded-lg overflow-y-auto text-base leading-relaxed flex-1 border border-stone-200/80"></div>
-                    <div class="grid grid-cols-3 gap-3 pt-2 flex-shrink-0">
-                        <button id="show-keyword-btn" class="main-btn w-full bg-gradient-to-br from-green-200 to-cyan-200 text-green-800 font-bold py-2.5 px-3 rounded-lg shadow">Keyword</button>
-                        <button id="fill-blank-btn" class="main-btn w-full bg-gradient-to-br from-amber-200 to-orange-200 text-amber-800 font-bold py-2.5 px-3 rounded-lg shadow">빈칸</button>
-                        <button id="show-all-btn" class="main-btn w-full bg-gradient-to-br from-sky-200 to-indigo-200 text-sky-800 font-bold py-2.5 px-3 rounded-lg shadow">전체 보기</button>
-                    </div>`;
+                    ${actionButtonsHTML}`;
 
-                navigationContainer.innerHTML = `
+                navigationContainer.innerHTML = (currentCards.length > 1) ? `
                     <div class="flex justify-between items-center">
                         <button id="prev-card-btn" class="main-btn bg-stone-200/80 text-stone-600 p-3 rounded-full shadow-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z"/></svg>
@@ -336,9 +453,8 @@
                         <button id="next-card-btn" class="main-btn bg-stone-200/80 text-stone-600 p-3 rounded-full shadow-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-arrow-right" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>
                         </button>
-                    </div>`;
+                    </div>` : '';
                 
-                const card = currentCards[currentCardIndex];
                 const importanceTagHTML = card.importance === 'Y' ? '<span class="ml-2 text-xs align-middle font-semibold text-sky-600 border border-sky-300 bg-sky-100 px-2 py-0.5 rounded-full flex-shrink-0">중요</span>' : '';
                 flashcardTitle.innerHTML = `<span>${card.name || "플래시카드"}</span>` + importanceTagHTML;
 
@@ -355,7 +471,9 @@
                 document.getElementById('flashcard-prompt').textContent = card.prompt;
                 const answerEl = document.getElementById('flashcard-answer');
                 answerEl.innerHTML = '<p class="text-stone-400">아래 버튼을 눌러 정답을 확인하세요.</p>';
-                document.getElementById('card-progress').textContent = `${currentCardIndex + 1} / ${currentCards.length}`;
+                if(currentCards.length > 1) {
+                    document.getElementById('card-progress').textContent = `${currentCardIndex + 1} / ${currentCards.length}`;
+                }
                 document.getElementById('flashcard-prompt').className = 'p-4 rounded-lg text-base transition-colors duration-300 bg-amber-50 text-amber-800 border-amber-200/80 flex-shrink-0'; 
                 
                 const isChecked = checkedCardIds.includes(card.id);
@@ -363,12 +481,16 @@
                 checkCardBtn.classList.toggle('text-yellow-400', isChecked);
                 checkCardBtn.classList.toggle('text-stone-300', !isChecked);
                 
-                const prevCardBtn = document.getElementById('prev-card-btn');
-                const nextCardBtn = document.getElementById('next-card-btn');
-                prevCardBtn.disabled = currentCardIndex === 0; 
-                nextCardBtn.disabled = currentCardIndex === currentCards.length - 1; 
-                prevCardBtn.classList.toggle('opacity-50', prevCardBtn.disabled); 
-                nextCardBtn.classList.toggle('opacity-50', nextCardBtn.disabled); 
+                if (currentCards.length > 1) {
+                    const prevCardBtn = document.getElementById('prev-card-btn');
+                    const nextCardBtn = document.getElementById('next-card-btn');
+                    prevCardBtn.disabled = currentCardIndex === 0; 
+                    nextCardBtn.disabled = currentCardIndex === currentCards.length - 1; 
+                    prevCardBtn.classList.toggle('opacity-50', prevCardBtn.disabled); 
+                    nextCardBtn.classList.toggle('opacity-50', nextCardBtn.disabled); 
+                    prevCardBtn.onclick = () => { if (currentCardIndex > 0) { currentCardIndex--; renderFlashcard(); } };
+                    nextCardBtn.onclick = () => { if (currentCardIndex < currentCards.length - 1) { currentCardIndex++; renderFlashcard(); } };
+                }
                 
                 const revealAnswer = (mode) => {
                     if (currentCards.length === 0) return;
@@ -381,11 +503,14 @@
                 };
 
                 checkCardBtn.onclick = toggleCheckStatus;
-                document.getElementById('show-keyword-btn').onclick = () => revealAnswer('keyword');
-                document.getElementById('fill-blank-btn').onclick = () => revealAnswer('blank');
-                document.getElementById('show-all-btn').onclick = () => revealAnswer('all');
-                prevCardBtn.onclick = () => { if (currentCardIndex > 0) { currentCardIndex--; renderFlashcard(); } };
-                nextCardBtn.onclick = () => { if (currentCardIndex < currentCards.length - 1) { currentCardIndex++; renderFlashcard(); } };
+
+                if (hasKeywords) {
+                    document.getElementById('show-keyword-btn').onclick = () => revealAnswer('keyword');
+                    document.getElementById('fill-blank-btn').onclick = () => revealAnswer('blank');
+                    document.getElementById('show-all-btn').onclick = () => revealAnswer('all');
+                } else {
+                    document.getElementById('show-full-answer-btn').onclick = () => revealAnswer('all');
+                }
             }
 
             function toggleCheckStatus() { 
@@ -420,6 +545,10 @@
     </script>
 </body>
 </html>
+
+
+
+
 
 
 
