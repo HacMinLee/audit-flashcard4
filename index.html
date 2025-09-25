@@ -143,6 +143,10 @@
                  <!-- 여기에 JS로 내용이 채워짐 -->
             </div>
         </div>
+        
+        <div id="exit-toast" class="hidden fixed bottom-10 left-1/2 -translate-x-1/2 bg-gray-800/90 text-white text-sm py-2 px-4 rounded-full shadow-lg transition-all duration-300 opacity-0">
+            한 번 더 누르면 종료됩니다.
+        </div>
     </div>
 
     <script>
@@ -182,6 +186,7 @@
             const backToMainFromRandomBtn = document.getElementById('back-to-main-from-random-btn');
             const randomAllBtn = document.getElementById('random-all-btn');
             const randomCheckedBtn = document.getElementById('random-checked-btn');
+            const exitToast = document.getElementById('exit-toast');
             
             const installPwaBtn = document.getElementById('install-pwa-btn');
             let deferredPrompt;
@@ -209,6 +214,9 @@
             let currentCardIndex = 0;
             let checkedCardIds = JSON.parse(localStorage.getItem('checkedCardIds_v1')) || [];
             let isRandomMode = false; // 랜덤 모드 상태 변수
+            let allowExit = false;
+            let currentScreen = 'loading';
+
 
             function shuffleArray(array) {
                 for (let i = array.length - 1; i > 0; i--) {
@@ -229,7 +237,8 @@
                         complete: function(results) { 
                             appData = processCsvData(results.data); 
                             allCardsFlat = appData.flatMap(c => c.sections.flatMap(s => s.topics.flatMap(t => t.cards.map(card => ({...card, chapter: c.chapter, section: s.sectionName})))));
-                            showScreen('main'); 
+                            history.replaceState({ screen: 'main' }, '', '#main');
+                            _displayScreen('main'); 
                         },
                         error: function(error) { throw new Error(`CSV 파싱 오류: ${error.message}`); }
                     });
@@ -316,10 +325,10 @@
                 }
                 currentCardIndex = 0;
                 renderFlashcard();
-                showScreen('flashcard');
+                navigateTo('flashcard');
             }
 
-            startStudyBtn.addEventListener('click', () => { selectionTitle.textContent = "목차"; buildAccordionMenu(appData); showScreen('selection'); });
+            startStudyBtn.addEventListener('click', () => { selectionTitle.textContent = "목차"; buildAccordionMenu(appData); navigateTo('selection'); });
             viewCheckedBtn.addEventListener('click', () => {
                 checkedCardIds = JSON.parse(localStorage.getItem('checkedCardIds_v1')) || [];
                 if (checkedCardIds.length === 0) { alert('체크된 문제가 없습니다.'); return; }
@@ -340,10 +349,10 @@
 
                 selectionTitle.textContent = "체크된 문제";
                 buildAccordionMenu(checkedData);
-                showScreen('selection');
+                navigateTo('selection');
             });
-            announcementBtn.addEventListener('click', () => showScreen('announcement'));
-            randomQuestionBtn.addEventListener('click', () => showScreen('randomSelection'));
+            announcementBtn.addEventListener('click', () => navigateTo('announcement'));
+            randomQuestionBtn.addEventListener('click', () => navigateTo('randomSelection'));
 
             randomAllBtn.addEventListener('click', () => {
                 if (allCardsFlat.length === 0) { alert('문제가 없습니다.'); return; }
@@ -363,24 +372,52 @@
                 startStudySession(shuffledCards, '랜덤', '체크된 문제');
             });
 
-            backToMainBtn.addEventListener('click', () => showScreen('main'));
-            backToMainFromAnnouncementBtn.addEventListener('click', () => showScreen('main'));
-            backToMainFromRandomBtn.addEventListener('click', () => showScreen('main'));
+            backToMainBtn.addEventListener('click', () => history.back());
+            backToMainFromAnnouncementBtn.addEventListener('click', () => history.back());
+            backToMainFromRandomBtn.addEventListener('click', () => history.back());
             backToSelectionBtn.addEventListener('click', () => { 
-                if (isRandomMode) {
-                    showScreen('randomSelection');
-                } else {
-                    showScreen('selection');
-                }
                 currentCards = []; 
                 isRandomMode = false;
+                history.back();
             });
             
-            function showScreen(screenKey) { 
+            function _displayScreen(screenKey) { 
+                if(!screens[screenKey]) return;
                 Object.values(screens).forEach(s => s.classList.remove('active')); 
                 screens[screenKey].classList.add('active'); 
+                currentScreen = screenKey;
+            }
+
+            function navigateTo(screenKey) {
+                if (currentScreen === screenKey) return;
+                history.pushState({ screen: screenKey }, '', `#${screenKey}`);
+                _displayScreen(screenKey);
             }
             
+            window.addEventListener('popstate', (event) => {
+                if (event.state && event.state.screen) {
+                    allowExit = false;
+                    _displayScreen(event.state.screen);
+                } else {
+                    if (allowExit) {
+                        window.close();
+                    } else {
+                        exitToast.classList.remove('hidden');
+                        setTimeout(() => exitToast.classList.remove('opacity-0'), 10);
+                        allowExit = true;
+
+                        setTimeout(() => {
+                            exitToast.classList.add('opacity-0');
+                            setTimeout(() => {
+                                exitToast.classList.add('hidden');
+                                allowExit = false;
+                            }, 300);
+                        }, 2000);
+                        history.pushState({ screen: 'main' }, '', '#main');
+                    }
+                }
+            });
+
             function adjustTitleFontSize(element) {
                 const initialFontSize = 20; // text-xl is 1.25rem = 20px
                 const minFontSize = 14;
@@ -545,6 +582,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
